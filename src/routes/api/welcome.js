@@ -4,7 +4,7 @@ const router = express.Router();
 
 router.get('/', (req, res) => {
   res.status(200).json({
-    status: 'sucess',
+    status: 'success',
     message: 'Welcome to ZPlatform-API!',
   });
 });
