@@ -1,7 +1,28 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import validator from 'validator';
+import PasswordValidator from 'password-validator';
 import crypto from 'crypto';
+
+const schema = new PasswordValidator();
+
+schema
+  .is()
+  .min(8) // Minimum length 8
+  .is()
+  .max(100) // Maximum length 100
+  .has()
+  .uppercase() // Must have uppercase letters
+  .has()
+  .lowercase() // Must have lowercase letters
+  .has()
+  .digits(2) // Must have at least 2 digits
+  .has()
+  .not()
+  .spaces() // Should not have spaces
+  .is()
+  .not()
+  .oneOf(['Passw0rd', 'Password123', 'admin123']);
 
 const userSchema = new mongoose.Schema({
   firstName: {
@@ -18,6 +39,18 @@ const userSchema = new mongoose.Schema({
     unique: true,
     lowercase: true,
     validate: [validator.isEmail, 'Please provide a valid email'],
+  },
+  phoneNumber: {
+    type: String,
+    required: [true, 'Please provide your phone number'],
+    unique: true,
+    validate: {
+      validator: function (el) {
+        // eslint-disable-next-line no-useless-escape
+        return /\b[\d\-\/@#$]{12}\b/.test(el);
+      },
+      message: 'Phone number should have 10 digits',
+    },
   },
   profilePhoto: String,
   gender: {
@@ -44,6 +77,17 @@ const userSchema = new mongoose.Schema({
       message: 'marital status is either: single,married,divorced, widowed',
     },
   },
+  active: {
+    type: Boolean,
+    default: false,
+  },
+  verified: {
+    type: String,
+    enum: {
+      values: ['UNVERIFIED', 'PENDING_VERIFICATION', 'VERIFIED'],
+    },
+    default: 'UNVERIFIED',
+  },
   nationality: {
     type: String,
     required: [true, 'Please enter your nationality'],
@@ -51,7 +95,12 @@ const userSchema = new mongoose.Schema({
   password: {
     type: String,
     required: [true, 'Please provide a password'],
-    minLength: 8,
+    validate: {
+      validator: function (el) {
+        return schema.validate(el);
+      },
+      message: 'Weak password',
+    },
     select: false,
   },
   passwordConfirm: {
