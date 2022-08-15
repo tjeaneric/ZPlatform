@@ -32,7 +32,13 @@ export const updateProfile = catchAsync(async (req, res, next) => {
     );
   }
   //2)filtered out unwanted field names that are not allowed to be updated
-  const filteredBody = filterObj(req.body, 'firstName', 'lastName');
+  const filteredBody = filterObj(
+    req.body,
+    'firstName',
+    'lastName',
+    'maritalStatus',
+    'nationality'
+  );
 
   //3)check if filteredBody object is empty
   if (Object.keys(filteredBody).length === 0) {
