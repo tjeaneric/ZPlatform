@@ -1,14 +1,7 @@
 import catchAsync from '../utils/catchAsync';
 import User from '../models/userModel';
 import AppError from '../utils/appError';
-
-const filterObj = (obj, ...allowedFields) => {
-  const newObj = {};
-  Object.keys(obj).forEach((el) => {
-    if (allowedFields.includes(el)) newObj[el] = obj[el];
-  });
-  return newObj;
-};
+import filterObj from '../utils/filterObj';
 
 export const getAllUsers = catchAsync(async (req, res, next) => {
   const users = await User.find();

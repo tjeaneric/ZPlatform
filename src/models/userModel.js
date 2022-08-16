@@ -61,12 +61,8 @@ const userSchema = new mongoose.Schema({
       message: 'Gender is either: male or female',
     },
   },
-  age: {
-    type: Number,
-    required: [true, 'Please enter your age'],
-  },
   dateOfBirth: {
-    type: String,
+    type: Date,
     required: [true, 'Please enter your date of birth'],
   },
   maritalStatus: {
@@ -76,6 +72,10 @@ const userSchema = new mongoose.Schema({
       values: ['single', 'married', 'divorced', 'widowed'],
       message: 'marital status is either: single,married,divorced, widowed',
     },
+  },
+  isStaff: {
+    type: Boolean,
+    default: false,
   },
   active: {
     type: Boolean,
@@ -92,6 +92,8 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Please enter your nationality'],
   },
+  idNumber: Number,
+  idPhoto: String,
   password: {
     type: String,
     required: [true, 'Please provide a password'],

@@ -5,6 +5,8 @@ import helmet from 'helmet';
 import mongoSanitize from 'express-mongo-sanitize';
 import xss from 'xss-clean';
 import hpp from 'hpp';
+import swaggerUi from 'swagger-ui-express';
+import swaggerDocument from './documentation';
 import globalErrorHandler from './controllers/errorController';
 import AppError from './utils/appError';
 import router from './routes';
@@ -48,6 +50,18 @@ app.use(hpp());
 
 // MAIN ROUTE
 app.use('/api/v1', limiter, router);
+
+// DOCUMENTATION ROUTE
+app.use(
+  '/api/v1/documentation',
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerDocument, {
+    swaggerOptions: {
+      docExpansion: 'none',
+      persistAuthorization: true,
+    },
+  })
+);
 
 app.all('*', (req, res, next) => {
   next(

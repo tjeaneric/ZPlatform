@@ -87,7 +87,6 @@ export const signup = catchAsync(async (req, res, next) => {
     email: req.body.email,
     phoneNumber: req.body.phoneNumber,
     gender: req.body.gender,
-    age: req.body.age,
     dateOfBirth: req.body.dateOfBirth,
     maritalStatus: req.body.maritalStatus,
     nationality: req.body.nationality,
@@ -187,7 +186,7 @@ export const generateLoginLink = catchAsync(async (req, res, next) => {
   //Check if email is provided
   if (!email) return next(new AppError('Please provide your email', 400));
 
-  //Check if user exist and password is correct
+  //Check if user exist
   const user = await User.findOne({ email });
 
   if (!user) {
@@ -230,13 +229,9 @@ export const generateLoginLink = catchAsync(async (req, res, next) => {
 
     res.status(200).json({
       status: 'success',
-      message: 'Login Link sent to your email',
+      message: 'Login successfully Link sent to your email',
     });
   } catch (err) {
-    user.passwordResetToken = undefined;
-    user.passwordResetExpires = undefined;
-    await user.save({ validateBeforeSave: false });
-
     return next(
       new AppError('There was an error sending email, Try again later!', 500)
     );
@@ -268,7 +263,10 @@ export const verifyLoginCode = catchAsync(async (req, res, next) => {
 
   const userOtp = await Otp.findOne({ phone });
 
-  if (!userOtp) return next(new AppError(`No Otp code sent to ${phone}`, 400));
+  if (!userOtp)
+    return next(
+      new AppError(`No Otp code sent to ${phone} or Otp has expired`, 400)
+    );
 
   if (!(await userOtp.correctOtpCode(otpCode, userOtp.otpCode))) {
     return next(new AppError('Incorrect Otp code', 401));
@@ -280,7 +278,7 @@ export const verifyLoginCode = catchAsync(async (req, res, next) => {
   createSendToken(user, 200, res);
 });
 
-export const protect = catchAsync(async (req, res, next) => {
+export const protect = async (req, res, next) => {
   //1)get the token and check if it exists
   let token;
   if (
@@ -295,26 +293,41 @@ export const protect = catchAsync(async (req, res, next) => {
       new AppError('You are not logged in!. Please log in to get access', 401)
     );
   }
-  //2)verification of the token
-  const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+  try {
+    //2)verification of the token
+    const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
 
-  //3)Check if the user still exists
-  const currentUser = await User.findById(decoded.id);
-  if (!currentUser) {
-    return next(
-      new AppError('The user belonging to this token no longer exist', 401)
-    );
+    //3)Check if the user still exists
+    const currentUser = await User.findById(decoded.id);
+    if (!currentUser) {
+      return next(
+        new AppError('The user belonging to this token no longer exist', 401)
+      );
+    }
+    //4)Check if user changed password after the token was issued
+    if (currentUser.changedPasswordAfter(decoded.iat)) {
+      return next(
+        new AppError(
+          'User recently changed password!. Please log in again.',
+          401
+        )
+      );
+    }
+    //Grant access to protected route
+    req.user = currentUser;
+    next();
+  } catch (err) {
+    return next();
   }
-  //4)Check if user changed password after the token was issued
-  if (currentUser.changedPasswordAfter(decoded.iat)) {
-    return next(
-      new AppError('User recently changed password!. Please log in again.', 401)
-    );
-  }
-  //Grant access to protected route
-  req.user = currentUser;
-  next();
-});
+};
+
+export const logout = (req, res) => {
+  res.cookie('jwt', 'loggedout', {
+    expires: new Date(Date.now() + 10 * 1000),
+    httpOnly: true,
+  });
+  res.status(200).json({ status: 'success' });
+};
 
 export const forgotPassword = catchAsync(async (req, res, next) => {
   //1)get user based on Posted email
@@ -346,7 +359,7 @@ export const forgotPassword = catchAsync(async (req, res, next) => {
 
     res.status(200).json({
       status: 'success',
-      message: 'Token sent to your email!',
+      message: 'resent link sent to your email!',
     });
   } catch (err) {
     user.passwordResetToken = undefined;
@@ -373,7 +386,7 @@ export const resetPassword = catchAsync(async (req, res, next) => {
   });
   //2)If the token has not expired and there is user, set new Password
   if (!user) {
-    return next(new AppError('Token is invalid or has expired!', 400));
+    return next(new AppError('This link is invalid or has expired!', 401));
   }
 
   user.password = req.body.password;
@@ -404,4 +417,90 @@ export const updatePassword = catchAsync(async (req, res, next) => {
 
   //4)Log in the user with updated password , send JWT
   createSendToken(user, 200, res);
+});
+
+export const accountVerification = catchAsync(async (req, res, next) => {
+  //get user id number and photo
+  const { idNumber, idPhoto } = req.body;
+
+  if (!idNumber || !idPhoto) {
+    return next(new AppError('Please provide id number and id photo', 400));
+  }
+
+  if (req.user.verified !== 'UNVERIFIED') {
+    return next(
+      new AppError(
+        'only UNVERIFIED users are allowed to upload their document',
+        400
+      )
+    );
+  }
+
+  const updatedUser = await User.findByIdAndUpdate(
+    req.user.id,
+    {
+      idNumber,
+      idPhoto,
+    },
+    {
+      new: true,
+      runValidators: true,
+    }
+  );
+
+  updatedUser.verified = 'PENDING_VERIFICATION';
+  await updatedUser.save({ validateBeforeSave: false });
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      user: updatedUser,
+    },
+  });
+});
+
+export const verifyUser = catchAsync(async (req, res, next) => {
+  //get user id number and photo
+  if (!req.user.isStaff) {
+    return next(
+      new AppError('You do not have permission to perform this action', 403)
+    );
+  }
+  const { id, verified } = req.body;
+
+  if (!verified || !id) {
+    return next(
+      new AppError('Please provide user id and verification status', 400)
+    );
+  }
+
+  if (verified !== 'VERIFIED' && verified !== 'UNVERIFIED') {
+    return next(
+      new AppError(
+        'verification status can either be VERIFIED or UNVERIFIED',
+        400
+      )
+    );
+  }
+
+  const user = await User.findById(id);
+
+  if (user.verified !== 'PENDING_VERIFICATION') {
+    return next(
+      new AppError(
+        'Only PENDING_VERIFICATION users are allowed to be verified',
+        400
+      )
+    );
+  }
+
+  user.verified = verified;
+  await user.save({ validateBeforeSave: false });
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      user,
+    },
+  });
 });
