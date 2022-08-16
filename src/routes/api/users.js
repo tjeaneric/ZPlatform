@@ -11,16 +11,22 @@ import {
   verifyLoginCode,
   generateLoginLink,
   loginWithLoginLink,
+  logout,
+  accountVerification,
+  verifyUser,
 } from '../../controllers/authController';
 
 const router = express.Router();
 
 router.post('/signup', signup);
 router.post('/signup/verify-otp', verifyOtp);
+
 router.post('/login', login);
 router.post('/login/login-with-link', generateLoginLink);
 router.get('/login/:otp', loginWithLoginLink);
 router.post('/login/verify-otp', verifyLoginCode);
+
+router.get('/logout', logout);
 
 router.post('/forgotPassword', forgotPassword);
 router.patch('/resetPassword/:token', resetPassword);
@@ -28,6 +34,10 @@ router.patch('/resetPassword/:token', resetPassword);
 router.patch('/updateMyPassword', protect, updatePassword);
 
 router.patch('/updateProfile', protect, updateProfile);
+
+router.patch('/verify-account', protect, accountVerification);
+
+router.patch('/verify-user', protect, verifyUser);
 
 router.get('/', protect, getAllUsers);
 
