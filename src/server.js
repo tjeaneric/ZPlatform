@@ -13,11 +13,11 @@ dotenv.config();
 const DB = process.env.DATABASE.replace('<PASSWORD>', process.env.DB_PASSWORD);
 mongoose.connect(DB).then(() => console.log('DB connected succesfully!'));
 
-const port = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5000;
 
-const server = app.listen(port, () =>
-  console.log(`App listening on port ${port}!....`)
-);
+const server = app.listen(PORT, () => {
+  console.log(`App listening on port ${PORT}!....`);
+});
 
 process.on('unhandledRejection', (err) => {
   console.log('UNHANDLED REJECTION, Shutting down.....');

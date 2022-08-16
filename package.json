@@ -19,10 +19,9 @@
       }
     },
     "prod": {
-      "command": "node --exec babel-node ./dist/server",
+      "command": "node ./dist/server",
       "env": {
-        "NODE_ENV": "production",
-        "PORT": 8000
+        "NODE_ENV": "production"
       }
     },
     "test": {
@@ -47,6 +46,11 @@
     "@babel/cli": "^7.18.10",
     "@babel/core": "^7.18.10",
     "@babel/node": "^7.18.10",
+    "@babel/plugin-transform-runtime": "^7.18.10",
+    "@babel/polyfill": "^7.12.1",
+    "@babel/preset-env": "^7.18.10",
+    "@babel/register": "^7.18.9",
+    "@babel/runtime": "^7.18.9",
     "bcryptjs": "^2.4.3",
     "better-npm-run": "^0.1.1",
     "dotenv": "^16.0.1",
@@ -89,6 +93,6 @@
     "prettier": "^2.7.1"
   },
   "engines": {
-    "node": ">=16.0.0"
+    "node": "16.0.0"
   }
 }
