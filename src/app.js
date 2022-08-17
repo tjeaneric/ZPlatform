@@ -6,6 +6,7 @@ import mongoSanitize from 'express-mongo-sanitize';
 import xss from 'xss-clean';
 import hpp from 'hpp';
 import swaggerUi from 'swagger-ui-express';
+import cors from 'cors';
 import swaggerDocument from './documentation';
 import globalErrorHandler from './controllers/errorController';
 import AppError from './utils/appError';
@@ -14,6 +15,9 @@ import router from './routes';
 const app = express();
 
 // GLOBAL MIDDLEWARES
+
+//Cors
+app.use(cors());
 
 //Set security HTTP headers
 app.use(helmet());
