@@ -1,5 +1,10 @@
 # **Company Z User Account Management System API**
 
+#### **Hosted Link**
+
+- The API is hosted on Heroku and can be accessed at `https://zplatform-uams-api.herokuapp.com/api/v1`
+- The documentation also can be accessed at `https://zplatform-uams-api.herokuapp.com/api/v1/documentation/`
+
 If anything goes wrong, You can contact [Jean Eric TUYISHIMIRE](mailto:ericjohn415@gmail.com)
 
 #### **Description**
