@@ -54,11 +54,6 @@ export const signup = catchAsync(async (req, res, next) => {
     specialChars: false,
   });
 
-  sendSMS({
-    clientPhone: `${phoneNumber}`,
-    message: `ZPlatform verification code for ${phoneNumber} is: ${otpNumber}`,
-  });
-
   //Check if user exists and is not active
   if (existingUser && !existingUser.active) {
     //Check if the number already has an OTP and replace it's value with a new one
@@ -67,8 +62,11 @@ export const signup = catchAsync(async (req, res, next) => {
     if (existingOtpHolder) {
       existingOtpHolder.otpCode = otpNumber;
       await existingOtpHolder.save({ validateBeforeSave: false });
-    } else {
-      await Otp.create({ phone: phoneNumber, otpCode: otpNumber });
+
+      sendSMS({
+        clientPhone: `${phoneNumber}`,
+        message: `ZPlatform verification code for ${phoneNumber} is: ${otpNumber}`,
+      });
     }
 
     return next(
@@ -79,9 +77,7 @@ export const signup = catchAsync(async (req, res, next) => {
     );
   }
 
-  await Otp.create({ phone: phoneNumber, otpCode: otpNumber });
-
-  await User.create({
+  const newUser = await User.create({
     firstName: req.body.firstName,
     lastName: req.body.lastName,
     email: req.body.email,
@@ -93,6 +89,14 @@ export const signup = catchAsync(async (req, res, next) => {
     password: req.body.password,
     passwordConfirm: req.body.passwordConfirm,
   });
+
+  if (newUser) {
+    await Otp.create({ phone: phoneNumber, otpCode: otpNumber });
+    sendSMS({
+      clientPhone: `${phoneNumber}`,
+      message: `ZPlatform verification code for ${phoneNumber} is: ${otpNumber}`,
+    });
+  }
 
   res.status(200).json({
     status: 'success',
@@ -119,7 +123,7 @@ export const verifyOtp = catchAsync(async (req, res, next) => {
 
   if (!userOtp) return next(new AppError(`No Otp code sent to ${phone}`, 400));
 
-  if (!(await userOtp.correctOtpCode(otpCode, userOtp.otpCode))) {
+  if (!(await userOtp.correctOtpCode(userOtp.otpCode, otpCode))) {
     return next(new AppError('Incorrect Otp code', 401));
   }
 
@@ -229,7 +233,7 @@ export const generateLoginLink = catchAsync(async (req, res, next) => {
 
     res.status(200).json({
       status: 'success',
-      message: 'Login successfully Link sent to your email',
+      message: 'Login Link successfully sent to your email',
     });
   } catch (err) {
     return next(

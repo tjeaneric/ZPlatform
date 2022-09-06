@@ -50,9 +50,29 @@ export const updateProfile = catchAsync(async (req, res, next) => {
   });
 });
 
-export const getUser = (req, res) => {
+export const getUser = async (req, res, next) => {
+  const user = await User.findById(req.params.id);
+
+  if (!user) {
+    return next(new AppError('No user found with that ID', 404));
+  }
+
   res.status(200).json({
-    status: 'sucess',
-    message: 'get all users',
+    status: 'success',
+    data: user,
+  });
+};
+
+export const deleteUser = async (req, res, next) => {
+  const user = await User.findByIdAndDelete(req.params.id);
+
+  if (!user) {
+    return next(new AppError('No user found with that ID', 404));
+  }
+
+  res.status(204).json({
+    status: 'success',
+    message: 'Deleted successfully',
+    data: null,
   });
 };

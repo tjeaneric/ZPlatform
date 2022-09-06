@@ -1,5 +1,10 @@
 import express from 'express';
-import { getAllUsers, updateProfile } from '../../controllers/userController';
+import {
+  deleteUser,
+  getAllUsers,
+  getUser,
+  updateProfile,
+} from '../../controllers/userController';
 import {
   signup,
   login,
@@ -40,5 +45,7 @@ router.patch('/verify-account', protect, accountVerification);
 router.patch('/verify-user', protect, verifyUser);
 
 router.get('/', protect, getAllUsers);
+router.get('/:id', protect, getUser);
+router.delete('/:id', protect, deleteUser);
 
 export default router;

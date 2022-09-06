@@ -49,7 +49,7 @@ const userSchema = new mongoose.Schema({
         // eslint-disable-next-line no-useless-escape
         return /\b[\d\-\/@#$]{12}\b/.test(el);
       },
-      message: 'Phone number should have 10 digits',
+      message: 'Phone number should have 12 digits',
     },
   },
   profilePhoto: String,
@@ -75,7 +75,7 @@ const userSchema = new mongoose.Schema({
   },
   isStaff: {
     type: Boolean,
-    default: false,
+    default: true,
   },
   active: {
     type: Boolean,

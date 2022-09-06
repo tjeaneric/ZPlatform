@@ -493,7 +493,7 @@ export const authDefinition = {
     in: 'body',
     required: ['email'],
     properties: {
-      phone: {
+      email: {
         type: 'string',
         format: 'email',
       },
